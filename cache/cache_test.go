@@ -1,14 +1,16 @@
 package cache_test
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/require"
 	"github.com/trad3r/lrucache/cache"
 	"testing"
 )
 
 func TestLRUCache(t *testing.T) {
-	lruCache := createCache(3000)
+	lruCache := cache.NewCache(10)
+
+	lruCacheWithTest := cache.NewCache(5)
+	lruCacheWithTest.Add("test", "test")
 
 	testCases := []struct {
 		name    string
@@ -18,37 +20,37 @@ func TestLRUCache(t *testing.T) {
 		ok      bool
 	}{
 		{
-			name:    "success get",
+			name:    "success add",
 			cache:   lruCache,
-			usedKey: "0",
-			method:  "get",
+			usedKey: "first",
+			method:  "add",
 			ok:      true,
 		},
 		{
-			name:    "success add",
+			name:    "success get",
 			cache:   lruCache,
-			usedKey: "-1",
-			method:  "add",
+			usedKey: "first",
+			method:  "get",
 			ok:      true,
 		},
 		{
 			name:    "success remove",
 			cache:   lruCache,
-			usedKey: "-1",
+			usedKey: "first",
 			method:  "remove",
 			ok:      true,
 		},
 		{
 			name:    "fail get",
 			cache:   lruCache,
-			usedKey: "-1",
+			usedKey: "first",
 			method:  "get",
 			ok:      false,
 		},
 		{
 			name:    "yet isset key",
-			cache:   lruCache,
-			usedKey: "0",
+			cache:   lruCacheWithTest,
+			usedKey: "test",
 			method:  "add",
 			ok:      false,
 		},
@@ -69,14 +71,4 @@ func TestLRUCache(t *testing.T) {
 			}
 		})
 	}
-}
-
-func createCache(count int) *cache.Cache {
-	lruCache := cache.NewCache(count)
-	for i := 0; i < lruCache.Count; i++ {
-		el := fmt.Sprintf("%d", i)
-		lruCache.Add(el, el)
-	}
-
-	return lruCache
 }

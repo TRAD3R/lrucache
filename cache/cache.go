@@ -5,16 +5,18 @@ import (
 )
 
 type Cache struct {
-	Count int
-	queue *list.List
-	data  map[string]string
+	Count    int
+	queue    *list.List
+	data     map[string]string
+	elements map[string]*list.Element
 }
 
 func NewCache(count int) *Cache {
 	return &Cache{
-		Count: count,
-		queue: list.New(),
-		data:  make(map[string]string),
+		Count:    count,
+		queue:    list.New(),
+		data:     make(map[string]string),
+		elements: make(map[string]*list.Element),
 	}
 }
 
@@ -39,7 +41,10 @@ func (cache Cache) Get(key string) (value string, ok bool) {
 		return value, ok
 	}
 
-	el := cache.findInQueue(key)
+	el, ok := cache.elements[key]
+	if !ok {
+		return value, ok
+	}
 	cache.queue.MoveToFront(el)
 
 	return value, ok
@@ -50,10 +55,14 @@ func (cache Cache) Remove(key string) (ok bool) {
 		return ok
 	}
 
-	el := cache.findInQueue(key)
+	el, ok := cache.elements[key]
+	if !ok {
+		return ok
+	}
 	cache.queue.Remove(el)
 
 	delete(cache.data, key)
+	delete(cache.elements, key)
 	return true
 }
 
@@ -61,21 +70,11 @@ func (cache Cache) Remove(key string) (ok bool) {
 func (cache Cache) deleteLast() {
 	lastEl := cache.queue.Back()
 	delete(cache.data, lastEl.Value.(string))
+	delete(cache.elements, lastEl.Value.(string))
 	cache.queue.Remove(lastEl)
 }
 
 // insert addes element to queue head
 func (cache Cache) insert(key string) {
-	cache.queue.PushFront(key)
-}
-
-func (cache Cache) findInQueue(key string) *list.Element {
-	el := cache.queue.Front()
-
-	for {
-		if el.Value.(string) == key {
-			return el
-		}
-		el = el.Next()
-	}
+	cache.elements[key] = cache.queue.PushFront(key)
 }
